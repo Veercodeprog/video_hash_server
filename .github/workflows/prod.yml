@@ -28,7 +28,7 @@ jobs:
           profile: minimal
           toolchain: stable
 
-      - name: Install GStreamer and dependencies
+      - name: Install GStreamer and FFmpeg dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -47,7 +47,15 @@ jobs:
             gstreamer1.0-gl \
             gstreamer1.0-gtk3 \
             gstreamer1.0-qt5 \
-            gstreamer1.0-pulseaudio
+            gstreamer1.0-pulseaudio \
+            ffmpeg \
+            libavfilter-dev \
+            libavformat-dev \
+            libavcodec-dev \
+            libavdevice-dev \
+            libavutil-dev \
+            libswscale-dev \
+            pkg-config
 
       - name: Build and test code
         run: |
