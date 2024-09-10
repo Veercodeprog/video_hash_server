@@ -7,37 +7,52 @@ use std::process::Command;
 use std::time::Instant;
 use vid2img::FileSource;
 
-pub fn extract_frames_with_videotoolbox(video_path: &str) -> Result<Vec<u8>, Box<dyn Error>> {
-    let start_time = Instant::now(); // Start timing hashing/fingerprinting
+pub fn extract_frames_using_videotools(video_path: &str) -> Result<Vec<String>, Box<dyn Error>> {
+    // Construct the ffmpeg command
+    let output_pattern = "output-%04d.png";
+    let status = Command::new("ffmpeg")
+        .arg("-hwaccel")
+        .arg("videotoolbox")
+        .arg("-i")
+        .arg(video_path)
+        .arg("-vf")
+        .arg("fps=1/10")
+        .arg("-pix_fmt")
+        .arg("rgb24")
+        .arg(output_pattern)
+        .status()?;
 
-    let output = Command::new("ffmpeg")
-        .args(&[
-            "-hwaccel",
-            "videotoolbox",
-            "-i",
-            video_path,
-            "-vf",
-            "fps=1",
-            "-f",
-            "image2pipe",
-            "-pix_fmt",
-            "yuvj444p",
-            "-",
-        ])
-        .output()?;
-
-    if !output.status.success() {
-        return Err(format!("FFmpeg error: {}", String::from_utf8_lossy(&output.stderr)).into());
+    if !status.success() {
+        return Err("ffmpeg command failed".into());
     }
-    let frame_data = output.stdout;
 
-    let elapsed_time = start_time.elapsed(); // Stop timing frame extraction
+    // Collect the extracted frame paths
+    let mut frame_paths = Vec::new();
+    let frame_pattern = Path::new(output_pattern)
+        .file_name()
+        .unwrap()
+        .to_str()
+        .unwrap();
+    let frame_prefix = &frame_pattern[..frame_pattern.len() - 8]; // Assuming output pattern is output_%04d.png
 
-    println!("Frame extraction completed in {:?}", elapsed_time);
+    for entry in std::fs::read_dir(".")? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.extension().and_then(|s| s.to_str()) == Some("png") {
+            if path
+                .file_name()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .starts_with(frame_prefix)
+            {
+                frame_paths.push(path.to_str().unwrap().to_string());
+            }
+        }
+    }
 
-    Ok(frame_data)
+    Ok(frame_paths)
 }
-
 // Function to extract frames from the video and save them as PNGs
 pub fn extract_frames(video_path: &str, interval_sec: u64) -> Result<Vec<String>, Box<dyn Error>> {
     let file_path = Path::new(video_path);

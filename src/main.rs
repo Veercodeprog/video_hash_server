@@ -7,7 +7,7 @@ mod phash;
 mod video;
 pub use crate::dhash::compute_dhash;
 pub use crate::phash::compute_phash;
-pub use crate::video::{extract_frames, extract_frames_with_videotoolbox};
+pub use crate::video::{extract_frames, extract_frames_using_videotools};
 #[derive(Deserialize)]
 struct VideoUrl {
     video_url: String,
@@ -22,7 +22,8 @@ struct HashResponse {
 #[get("/phash")]
 async fn phash_api(query: web::Query<VideoUrl>) -> impl Responder {
     // Extract frames from the video file provided in the URL
-    match video::extract_frames(&query.video_url, 10) {
+
+    match video::extract_frames_using_videotools(&query.video_url) {
         Ok(frame_paths) => {
             let mut hashes = Vec::new();
             for frame_path in frame_paths {
@@ -44,13 +45,31 @@ async fn phash_api(query: web::Query<VideoUrl>) -> impl Responder {
         }
     }
 }
-// API for dHash
-// #[get("/dhash")]
-// async fn dhash_api(query: web::Query<VideoUrl>) -> impl Responder {
-//     let frame_data = video::extract_frame(&query.video_url).unwrap();
-//     let dhash = dhash::compute_dhash(&frame_data);
-//     HttpResponse::Ok().json(HashResponse { hash: dhash })
-// }
+#[get("/dhash")]
+async fn dhash_api(query: web::Query<VideoUrl>) -> impl Responder {
+    // Extract frames from the video file provided in the URL
+    match extract_frames_using_videotools(&query.video_url) {
+        Ok(frame_paths) => {
+            let mut hashes = Vec::new();
+            for frame_path in frame_paths {
+                // Open the image file
+                match open(&frame_path) {
+                    Ok(img) => {
+                        // Compute dHash for the image
+                        let dhash = compute_dhash(&img);
+                        hashes.push(dhash);
+                    }
+                    Err(e) => eprintln!("Error opening image file {}: {}", frame_path, e),
+                }
+            }
+            HttpResponse::Ok().json(hashes) // Return the list of dHashes
+        }
+        Err(e) => {
+            eprintln!("Error processing video: {}", e);
+            HttpResponse::BadRequest().body("Error processing video")
+        }
+    }
+}
 
 // // API for Blake3 hash
 // #[get("/blake3")]
@@ -62,8 +81,7 @@ async fn phash_api(query: web::Query<VideoUrl>) -> impl Responder {
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
-        App::new().service(phash_api)
-        // .service(dhash_api)
+        App::new().service(phash_api).service(dhash_api)
         // .service(blake3_api)
     })
     .bind("127.0.0.1:8080")?
