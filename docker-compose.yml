@@ -1,6 +1,7 @@
 services:
   actix_web_app:
     build: .
+    image: video-hash-server:latest # Correct tag without trailing '/'
     ports:
       - "8080:8080"
     environment:
