@@ -1,5 +1,15 @@
 FROM messense/rust-musl-cross:x86_64-musl as chef
-ENV SQLX_OFFLINE=true
+
+# Install GStreamer and its plugins
+RUN apt-get update && \
+    apt-get install -y \
+    gstreamer1.0-tools \
+    gstreamer1.0-plugins-base \
+    gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-ugly \
+    gstreamer1.0-plugins-bad
+
+# Install cargo-chef
 RUN cargo install cargo-chef
 WORKDIR /api-deployment-example
 
@@ -23,3 +33,4 @@ FROM scratch
 COPY --from=builder /api-deployment-example/target/x86_64-unknown-linux-musl/release/api-deployment-example /api-deployment-example
 ENTRYPOINT ["/api-deployment-example"]
 EXPOSE 3000
+
