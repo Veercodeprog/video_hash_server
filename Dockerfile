@@ -8,17 +8,24 @@ RUN apt-get update && \
     pkg-config \
     libgstreamer1.0-dev \
     libgstreamer-plugins-base1.0-dev \
-    libgstreamer-plugins-good1.0-dev \
-    libgstreamer-plugins-ugly1.0-dev \
     libgstreamer-plugins-bad1.0-dev \
-    libglib2.0-dev \
-    libgobject-2.0-dev \
+    gstreamer1.0-plugins-base \
+    gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-bad \
+    gstreamer1.0-plugins-ugly \
+    gstreamer1.0-libav \
+    gstreamer1.0-tools \
+    gstreamer1.0-x \
+    gstreamer1.0-alsa \
+    gstreamer1.0-gl \
+    gstreamer1.0-gtk3 \
+    gstreamer1.0-qt5 \
+    gstreamer1.0-pulseaudio \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Debug pkg-config
 RUN pkg-config --libs --cflags gstreamer-1.0 || echo "GStreamer not found"
-RUN pkg-config --libs --cflags gstreamer-1.0
 
 # Set up Rust and the workspace
 FROM rust:latest as rust
@@ -45,5 +52,5 @@ RUN cargo chef cook --release --target x86_64-unknown-linux-musl --recipe-path r
 FROM rust as final
 COPY --from=planner /api-deployment-example/target/x86_64-unknown-linux-musl/release/api-deployment-example /api-deployment-example
 ENTRYPOINT ["/api-deployment-example"]
-EXPOSE 3000
+EXPOSE 8080
 
