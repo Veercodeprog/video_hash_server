@@ -16,6 +16,10 @@ RUN apt-get update && \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
+# Debug pkg-config
+RUN pkg-config --libs --cflags gstreamer-1.0 || echo "GStreamer not found"
+RUN pkg-config --libs --cflags gstreamer-1.0
+
 # Set up Rust and the workspace
 FROM rust:latest as rust
 
@@ -40,19 +44,6 @@ RUN cargo chef cook --release --target x86_64-unknown-linux-musl --recipe-path r
 # Final build stage
 FROM rust as final
 COPY --from=planner /api-deployment-example/target/x86_64-unknown-linux-musl/release/api-deployment-example /api-deployment-example
-ENTRYPOINT ["/api-deployment-example"]
-EXPOSE 3000
-COPY --from=planner /api-deployment-example/recipe.json recipe.json
-# Build & cache dependencies
-RUN cargo chef cook --release --target x86_64-unknown-linux-musl --recipe-path recipe.json
-# Copy source code from previous stage
-COPY . .
-# Build application
-RUN cargo build --release --target x86_64-unknown-linux-musl
-
-# Create a new stage with a minimal image
-FROM scratch
-COPY --from=builder /api-deployment-example/target/x86_64-unknown-linux-musl/release/api-deployment-example /api-deployment-example
 ENTRYPOINT ["/api-deployment-example"]
 EXPOSE 3000
 
