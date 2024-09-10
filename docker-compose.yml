@@ -1,13 +1,8 @@
 services:
-  api:
-    image: video-hash-server/
-    build:
-      context: .
-      dockerfile: Dockerfile
+  actix_web_app:
+    build: .
     ports:
-      - "3000:3000"
-    # Removed the `depends_on` section as there's no `db` service
-# Removed the `db` service section
-
-# Removed the `volumes` section as it's no longer used
-
+      - "8080:8080"
+    environment:
+      - RUST_LOG=info
+    restart: always

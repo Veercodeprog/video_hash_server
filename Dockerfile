@@ -1,56 +1,30 @@
-# Use an appropriate base image
-FROM ubuntu:20.04 as builder
+# Use an official Rust image as a base
+FROM rust:latest AS builder
 
-# Install dependencies including GStreamer and FFmpeg
-RUN apt-get update && \
-    apt-get install -y \
-    build-essential \
-    pkg-config \
-    libgstreamer1.0-dev \
-    libgstreamer-plugins-base1.0-dev \
-    libgstreamer-plugins-bad1.0-dev \
-    gstreamer1.0-plugins-base \
-    gstreamer1.0-plugins-good \
-    gstreamer1.0-plugins-bad \
-    gstreamer1.0-plugins-ugly \
-    gstreamer1.0-libav \
-    gstreamer1.0-tools \
-    gstreamer1.0-x \
-    gstreamer1.0-alsa \
-    gstreamer1.0-gl \
-    gstreamer1.0-gtk3 \
-    gstreamer1.0-qt5 \
-    gstreamer1.0-pulseaudio \
-    ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
+# Create a new directory for the app
+WORKDIR /app
 
-# Debug pkg-config
-RUN pkg-config --libs --cflags gstreamer-1.0 || echo "GStreamer not found"
-
-# Set up Rust and the workspace
-FROM rust:latest as rust
-
-# Install cargo-chef for caching dependencies
-RUN cargo install cargo-chef
-
-# Set working directory
-WORKDIR /api-deployment-example
-
-# Copy source code
+# Copy the entire app into the container
 COPY . .
 
-# Prepare and build
-FROM builder as chef
-COPY --from=rust /usr/local/cargo/bin/cargo-chef /usr/local/bin/
-RUN cargo chef prepare --recipe-path recipe.json
+# Build the Rust app with release optimizations
+RUN cargo build --release
 
-FROM builder as planner
-COPY --from=chef /api-deployment-example/recipe.json recipe.json
-RUN cargo chef cook --release --target x86_64-unknown-linux-musl --recipe-path recipe.json
+# Use a minimal image for running the compiled binary
+FROM debian:buster-slim
 
-# Final build stage
-FROM rust as final
-COPY --from=planner /api-deployment-example/target/x86_64-unknown-linux-musl/release/api-deployment-example /api-deployment-example
-ENTRYPOINT ["/api-deployment-example"]
+# Install necessary dependencies for running the app (if needed)
+RUN apt-get update && apt-get install -y libssl-dev ca-certificates && rm -rf /var/lib/apt/lists/*
+
+# Set the working directory inside the new image
+WORKDIR /app
+
+# Copy the compiled binary from the builder stage
+COPY --from=builder /app/target/release/your_app_binary /app/your_app_binary
+
+# Expose the port your Actix Web app will run on
 EXPOSE 8080
+
+# Run the Actix Web app
+CMD ["./your_app_binary"]
 
