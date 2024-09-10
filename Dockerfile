@@ -27,7 +27,7 @@ RUN apt-get update && \
     gstreamer1.0-gl \
     gstreamer1.0-gtk3 \
     gstreamer1.0-qt5 \
-    gstreamer1.0-pulseaudio
+    gstreamer1.0-pulseaudio || true
 
 # Create a new directory for the app
 WORKDIR /app
