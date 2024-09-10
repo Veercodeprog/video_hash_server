@@ -1,0 +1,13 @@
+[package]
+name = "video_hash_server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix-web = "4.9.0"
+blake3 = "1.5.4"
+ffmpeg-next = "7.0.4"
+image = "0.25.2"
+serde = { version = "1.0.210", features = ["derive"] }
+serde_json = "1.0.128"
+tokio = { version = "1.40.0", features = ["full"] }

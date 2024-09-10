@@ -1,0 +1,40 @@
+# Ignore the target directory where Cargo builds the project
+/target/
+
+# If using the release flag, ignore release builds
+/target/release/
+
+# Cargo.lock (if you're building a library)
+# It is generally recommended to include Cargo.lock for applications but ignore it for libraries
+# Uncomment the following line if you're building a library:
+/Cargo.lock
+
+# Ignore the generated binary files
+*.exe
+*.out
+*.o
+*.so
+*.dylib
+
+# Debugging files
+*.log
+*.rs.bk
+
+# Ignore specific tools (you may add other tools you're using)
+.idea/
+.vscode/
+*.iml
+
+# Temporary files created by the OS
+*.DS_Store
+*.swp
+*.swo
+*.bak
+
+# If using GitHub Codespaces or other remote development environments
+.codespaces/
+
+# Ignore Rust-specific temporary and backup files
+*.rlib
+*.rmeta
+
