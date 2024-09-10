@@ -1,7 +1,7 @@
 # Use an official Rust image as a base
 FROM rust:latest AS builder
 
-# Install GStreamer, FFmpeg, and other required development libraries
+# Install GStreamer and other required development libraries
 RUN apt-get update && \
     apt-get install -y \
     pkg-config \
@@ -28,7 +28,8 @@ RUN apt-get update && \
     gstreamer1.0-gtk3 \
     gstreamer1.0-qt5 \
     gstreamer1.0-pulseaudio \
-    ffmpeg || true
+    ffmpeg && \
+    rm -rf /var/lib/apt/lists/*
 
 # Create a new directory for the app
 WORKDIR /app
