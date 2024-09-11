@@ -20,12 +20,30 @@ fn create_output_directory(video_path: &str) -> Result<PathBuf, Box<dyn Error>> 
 
     Ok(output_dir)
 }
+fn get_video_duration(video_path: &str) -> Result<f64, Box<dyn Error>> {
+    let output = Command::new("ffprobe")
+        .arg("-v")
+        .arg("error")
+        .arg("-show_entries")
+        .arg("format=duration")
+        .arg("-of")
+        .arg("default=noprint_wrappers=1:nokey=1")
+        .arg(video_path)
+        .output()?;
+
+    let duration_str = String::from_utf8(output.stdout)?;
+    let duration: f64 = duration_str.trim().parse()?;
+    Ok(duration)
+}
 
 pub fn extract_frames_using_videotools(video_path: &str) -> Result<Vec<String>, Box<dyn Error>> {
     // Construct the ffmpeg command
     let output_dir = create_output_directory(video_path)?;
-
-    // Construct the ffmpeg command
+    let duration = get_video_duration(video_path)?;
+    println!("duration:{:?}", duration);
+    let num_frames = 5; // Adjust if you want a different number of frames
+    let interval = duration / num_frames as f64; // Time between frames
+                                                 // Construct the ffmpeg command
     let output_pattern = output_dir.join("output-%04d.png");
     let status = Command::new("ffmpeg")
         .arg("-hwaccel")
@@ -33,7 +51,7 @@ pub fn extract_frames_using_videotools(video_path: &str) -> Result<Vec<String>, 
         .arg("-i")
         .arg(video_path)
         .arg("-vf")
-        .arg("fps=1/10")
+        .arg(format!("fps=1/{}", interval)) // Use the calculated interval
         .arg("-pix_fmt")
         .arg("rgb24")
         .arg(output_pattern.clone())
