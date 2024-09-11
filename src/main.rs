@@ -84,7 +84,7 @@ async fn main() -> std::io::Result<()> {
         App::new().service(phash_api).service(dhash_api)
         // .service(blake3_api)
     })
-    .bind("127.0.0.1:8080")?
+    .bind("0.0.0.0:8080")?
     .run()
     .await
 }
